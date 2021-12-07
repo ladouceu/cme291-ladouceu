@@ -336,17 +336,18 @@ def back_opt_vf_and_policy(
     error_tolerance: float,
     mode:str
 ) -> Iterator[Tuple[ValueFunctionApprox[S],
-                    ValueFunctionApprox[S],
-                    ValueFunctionApprox[S],
                     DeterministicPolicy[S, A]]]:
+    
+#     -> Iterator[Tuple[ValueFunctionApprox[S],
+#                     ValueFunctionApprox[S],
+#                     ValueFunctionApprox[S],
+#                     DeterministicPolicy[S, A]]]:
     '''Use backwards induction to find the optimal value function and optimal
     policy at each time step, using the given FunctionApprox for each time step
     for a random sample of the time step's states.
 
     '''
     vp: List[Tuple[ValueFunctionApprox[S],
-                   ValueFunctionApprox[S],
-                   ValueFunctionApprox[S],
                    DeterministicPolicy[S, A]
                    ]] = []
 
@@ -360,10 +361,10 @@ def back_opt_vf_and_policy(
             data_batch_optimal = [(s, max(mdp.step(s, a).expectation(return_)
                                           for a in mdp.actions(s)))
                                  for s in mu.sample_n(num_state_samples)]
-            data_batch_continue = [(s, mdp.step(s, False).expectation(return_))
-                                  for s in mu.sample_n(num_state_samples)]
-            data_batch_execute  = [(s, mdp.step(s, True).expectation(return_))
-                                  for s in mu.sample_n(num_state_samples)]
+#             data_batch_continue = [(s, mdp.step(s, False).expectation(return_))
+#                                   for s in mu.sample_n(num_state_samples)]
+#             data_batch_execute  = [(s, mdp.step(s, True).expectation(return_))
+#                                   for s in mu.sample_n(num_state_samples)]
         
         # sample from uniform distribution instead of from mu, I am having trouble sampling outliers and 
         # I know that the derivative prices that are intersting are only between 0 and the spot price.
@@ -371,18 +372,10 @@ def back_opt_vf_and_policy(
             data_batch_optimal = [(NonTerminal(s), max(mdp.step(NonTerminal(s), a).expectation(return_)
                                           for a in mdp.actions(NonTerminal(s))))
                                  for s in (250*np.random.rand(num_state_samples)).tolist()]
-            data_batch_continue = [(NonTerminal(s), mdp.step(NonTerminal(s), False).expectation(return_))
-                                  for s in (250*np.random.rand(num_state_samples)).tolist()]
-            data_batch_execute  = [(NonTerminal(s), mdp.step(NonTerminal(s), True).expectation(return_))
-                                  for s in (250*np.random.rand(num_state_samples)).tolist()]
-
-#             data_batch_optimal = [(NonTerminal(s), max(mdp.step(NonTerminal(s), a).expectation(return_)
-#                                           for a in mdp.actions(NonTerminal(s))))
-#                                  for s in mu.sample_n(num_state_samples)]
 #             data_batch_continue = [(NonTerminal(s), mdp.step(NonTerminal(s), False).expectation(return_))
-#                                   for s in mu.sample_n(num_state_samples)]
+#                                   for s in (250*np.random.rand(num_state_samples)).tolist()]
 #             data_batch_execute  = [(NonTerminal(s), mdp.step(NonTerminal(s), True).expectation(return_))
-#                                   for s in mu.sample_n(num_state_samples)]
+#                                   for s in (250*np.random.rand(num_state_samples)).tolist()]
 
         
         
@@ -391,8 +384,8 @@ def back_opt_vf_and_policy(
         # we know the optimal: f(x) = max(payoff(x),vf_opt(x))
         # BUT I am not able to get around the library interface to build this
         v_opt  = approx0.solve(data_batch_optimal,  error_tolerance)
-        v_cont = approx0.solve(data_batch_continue, error_tolerance)
-        v_exec = approx0.solve(data_batch_execute,  error_tolerance)
+#         v_cont = approx0.solve(data_batch_continue, error_tolerance)
+#         v_exec = approx0.solve(data_batch_execute,  error_tolerance)
 
 
         
@@ -449,27 +442,30 @@ def back_opt_vf_and_policy(
         # the maximum price x at which payoff(x) >= vf_cont(x) holds.
         # a small tolerance could be useful here to account for approximation errors; the vf_cont can get very close to the payoff 
         # without crossing it
-#         def deter_policy(state: S) -> A:
-#             return max(
-#                 ((mdp.step(NonTerminal(state), a).expectation(return_), a)
-#                  for a in mdp.actions(NonTerminal(state))),
-#                 key=itemgetter(0)
-#             )[1]
+        def deter_policy(state: S) -> A:
+            return max(
+                ((mdp.step(NonTerminal(state), a).expectation(return_), a)
+                 for a in mdp.actions(NonTerminal(state))),
+                key=itemgetter(0)
+            )[1]
 
 #         vp.append((v_opt,
 #                    v_cont,
 #                    v_exec,
 #                    DeterministicPolicy(deter_policy)))
-        def deter_policy(state: S) -> A:
-            return max(((v_cont(NonTerminal(state)), False),(v_exec(NonTerminal(state)), True)), 
-                       key=itemgetter(0)
-                      )[1]
 
-        vp.append((v_opt,
-                   v_cont,
-                   v_exec,
-                   DeterministicPolicy(deter_policy)))
+#         def deter_policy(state: S) -> A:
+#             return max(((v_cont(NonTerminal(state)), False),(v_exec(NonTerminal(state)), True)), 
+#                        key=itemgetter(0)
+#                       )[1]
+
+#         vp.append((v_opt,
+#                    v_cont,
+#                    v_exec,
+#                    DeterministicPolicy(deter_policy)))
         
+        vp.append((v_opt,
+                   DeterministicPolicy(deter_policy)))
 
     return reversed(vp)
 
