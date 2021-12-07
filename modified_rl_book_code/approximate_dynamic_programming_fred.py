@@ -10,7 +10,7 @@ from operator import itemgetter
 import numpy as np
 
 from rl.distribution import Distribution
-from function_approx_fred import FunctionApprox
+from .function_approx_fred import FunctionApprox
 from rl.iterate import iterate
 from rl.markov_process import (FiniteMarkovRewardProcess, MarkovRewardProcess,
                                RewardTransition, NonTerminal, State)
